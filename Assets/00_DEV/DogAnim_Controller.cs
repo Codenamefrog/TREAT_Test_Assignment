@@ -1,95 +1,93 @@
 using System.Collections;
-using Unity.VisualScripting;
-using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class DogAnimController : MonoBehaviour
+public class DogAnimController_test : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    [SerializeField]
-    Animator dogAnim;
-    [SerializeField]
-    Button BtnBark;
-    [SerializeField]
-    Button BtnRoll;
-    [SerializeField]
-    Button BtnSpin;
-    public int animState { get; set; }
-    
+    [SerializeField] Animator dogAnim;
+    [SerializeField] Button BtnBark;
+    [SerializeField] Button BtnRoll;
+    [SerializeField] Button BtnSpin;
+
+    // Trackers for our idle system
+    private float idleTimer = 0f;
+    private bool isAnimating = false;
 
     void Awake()
     {
+        if (dogAnim == null) dogAnim = GetComponent<Animator>();
 
-        
-        if (BtnRoll != null && BtnBark != null && BtnSpin !=null)
+        if (BtnRoll != null && BtnBark != null && BtnSpin != null)
         {
-            // Listen to its onClick event
-            BtnRoll.onClick.AddListener(OnButtonClick);
-            BtnBark.onClick.AddListener(OnButtonClick);
-            BtnSpin.onClick.AddListener(OnButtonClick);
+            BtnRoll.onClick.AddListener(() => OnActionButtonClicked(1));
+            BtnBark.onClick.AddListener(() => OnActionButtonClicked(2));
+            BtnSpin.onClick.AddListener(() => OnActionButtonClicked(3));
         }
     }
 
-    void OnButtonClick()
+    // Update runs every frame
+    void Update()
     {
-        dogAnim.SetBool("ButPressed",true);
+        // Only count up the idle timer if the dog isn't currently doing a trick
+        if (!isAnimating)
+        {
+            idleTimer += Time.deltaTime;
+
+            if (idleTimer >= 10f)
+            {
+                TriggerIdleSit();
+            }
+        }
     }
 
-
-    IEnumerator Start()
+    void OnActionButtonClicked(int animState)
     {
+        StopAllCoroutines(); 
         
-        dogAnim = GetComponent<Animator>();
-        //float timer = 0f;
-        //while (timer < 10f)
-        //{
-        //    timer += Time.deltaTime;
-        //}
+        // Reset the idle timer as soon as a user clicks a button
+        idleTimer = 0f; 
+        
+        StartCoroutine(PlayAnimationSequence(animState));
+    }
 
-       // if (timer >= 10f & !dogAnim.GetBool("ButPressed"))
-       // {
-       //     Debug.Log(timer);
-       //     timer = 0f;    
-       //     dogAnim.SetInteger("Sit_ID", Random.Range(0,3));
-       //     dogAnim.SetTrigger("Sit");
-       //     yield return null; // wait one frame
-       //     Debug.Log(timer);
-       // }
-  
+    void TriggerIdleSit()
+    {
+        // Reset the timer so it doesn't spam this trigger every frame after 10 seconds
+        idleTimer = 0f; 
         
-        if (animState == 1)
+        dogAnim.SetInteger("Sit_ID", Random.Range(0, 3));
+        dogAnim.SetTrigger("Sit");
+    }
+
+    IEnumerator PlayAnimationSequence(int animState)
+    {
+        isAnimating = true;
+        dogAnim.SetBool("ButPressed", true);
+
+        if (animState == 1) // Roll
         {
-
             dogAnim.SetTrigger("ToSit");
-            dogAnim.SetInteger("Com_ID",1);
-            dogAnim.SetBool("ButPressed",false);
-            yield return new WaitForSeconds(3f);
-            animState = 0;
-
+            dogAnim.SetInteger("Com_ID", 1);
         }
-        if (animState == 2)
+        else if (animState == 2) // Bark
         {
-            Debug.Log("Triggered Bark");
-            dogAnim.SetInteger("Com_ID",0);
+            dogAnim.SetInteger("Com_ID", 0);
             dogAnim.SetTrigger("ToStand");
-
-            dogAnim.SetBool("ButPressed",false);
-            yield return new WaitForSeconds(3f);
-            animState = 0;
-            
         }
-        if (animState == 3)
+        else if (animState == 3) // Spin
         {
-            Debug.Log("Triggered Spin");
             dogAnim.SetTrigger("ToStand");
-            dogAnim.SetInteger("Com_ID",2);
-            dogAnim.SetBool("ButPressed",false);
-            yield return new WaitForSeconds(3f);
-            animState = 0;
+            dogAnim.SetInteger("Com_ID", 2);
         }
+
+        // Wait for the 3-second animation to finish
+        yield return new WaitForSeconds(3f);
         
+        // Reset the dog's states so it's ready for the next trick or idle
+        dogAnim.SetBool("ButPressed", false);
+        isAnimating = false;
+        
+        // Reset the idle timer again so the dog doesn't instantly sit right after finishing a trick
+        idleTimer = 0f; 
     }
-
-
 }
