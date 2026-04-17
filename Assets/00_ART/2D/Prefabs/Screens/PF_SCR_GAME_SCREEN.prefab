@@ -261,7 +261,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5911011889391996856}
   m_Layer: 5
-  m_Name: GAME_SCREEN
+  m_Name: PF_SCR_GAME_SCREEN
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
